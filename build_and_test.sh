@@ -43,7 +43,7 @@ echo "Create database schema and load sample data"
 liquibase --changeLogFile=src/main/db/changelog.xml update
 
 echo "Build fresh war for Tomcat deployment"
-mvn clean compile war:war
+mvn -q clean compile war:war
 
 echo "Build the oracleConfig.properties file for the Tomcat application under test"
 redis-cli -h $(hostname) get OracaleConfigURL > oracleConfig.properties
@@ -74,7 +74,7 @@ echo "Configuring test application to point to Tomcat endpoint"
 redis-cli get TomcatURL > rest_webservice.properties
 
 echo "Run integration tests"
-mvn verify failsafe:integration-test
+mvn -q verify failsafe:integration-test
 
 echo "Bring down Tomcat, Oracle, and Redis"
 docker-compose -f compose-tomcat.yml -p redis-oracle-tomcat down

@@ -3,16 +3,30 @@
 echo "Start the redis server"
 docker-compose -f compose-redis.yml -p redis-oracle-tomcat up -d
 
-# this needs to be replaced with looking at the docker logs for redis
-echo "Waiting for redis to start"
-sleep 15
+echo "Waiting for Redis to start"
+while true ; do
+  result=$(docker logs redis 2> /dev/null | grep -c "Ready to accept connections")
+  if [ $result = 1 ] ; then
+    echo "Redis has started"
+    break
+  fi
+  sleep 1
+done
 
 echo "Bring up Oracle"
 docker-compose -f compose-oracle.yml -p redis-oracle-tomcat up -d
 
-# this needs to be replaced with looking at the docker logs for oracle
 echo "Waiting for Oracle to start"
-sleep 30
+while true ; do
+  curl -s localhost:8081 > tmp.txt
+  result=$(grep -c "DOCTYPE HTML PUBLIC" tmp.txt)
+  if [ $result = 1 ] ; then
+    echo "Oracle has started"
+    break
+  fi
+  sleep 1
+done
+rm tmp.txt
 
 # there is obvious dupication in the oracle url, username, and password that should
 # be refactored - this is an example only
@@ -58,7 +72,16 @@ echo "Bring up Tomcat"
 docker-compose -f compose-tomcat.yml -p redis-oracle-tomcat up -d
 
 echo "Waiting for Tomcat to start"
-sleep 120
+while true ; do
+  curl -s localhost:8080 > tmp.txt
+  result=$(grep -c "HTTP Status 404" tmp.txt)
+  if [ $result = 1 ] ; then
+    echo "Tomcat has started"
+    break
+  fi
+  sleep 1
+done
+rm tmp.txt
 
 echo Smoke test
 curl -s http://$(hostname):8080/passwordAPI/passwordDB > temp

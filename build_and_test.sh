@@ -100,8 +100,10 @@ curl -s http://$(hostname):8080/passwordAPI/passwordDB > temp
 if grep -q "RESULT_SET" temp
 then
     echo "SMOKE TEST SUCCESS"
+    figlet -f slant "Smoke Test Success"
 else
     echo "SMOKE TEST FAILURE!!!"
+    figlet -f slant "Smoke Test Failure"
 fi
 rm temp
 

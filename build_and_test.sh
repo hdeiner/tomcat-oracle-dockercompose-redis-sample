@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+figlet -f standard "Instanciate and Provision Redis"
+
 echo "Start the redis server"
 docker-compose -f compose-redis.yml -p redis-oracle-tomcat up -d
 
@@ -12,6 +14,8 @@ while true ; do
   fi
   sleep 1
 done
+
+figlet -f standard "Instanciate and Provision Oracle"
 
 echo "Bring up Oracle"
 docker-compose -f compose-oracle.yml -p redis-oracle-tomcat up -d
@@ -27,6 +31,8 @@ while true ; do
   sleep 1
 done
 rm tmp.txt
+
+figlet -f standard "Configure for Oracle in Redis"
 
 # there is obvious dupication in the oracle url, username, and password that should
 # be refactored - this is an example only
@@ -46,6 +52,8 @@ redis-cli -h $(hostname) set OracleConfigPassword "password=oracle"
 
 redis-cli -h $(hostname) set TomcatURL "hosturl=http://"$(hostname)":8080"
 
+figlet -f standard "Create Oracle Database"
+
 echo "Build the liquibase.properties file for Liquibase to run against"
 redis-cli -h $(hostname) get LiquibaseDriver > liquibase.properties
 redis-cli -h $(hostname) get LiquibaseClasspath >> liquibase.properties
@@ -55,6 +63,8 @@ redis-cli -h $(hostname) get LiquibaseOracleDatabasePassword >> liquibase.proper
 
 echo "Create database schema and load sample data"
 liquibase --changeLogFile=src/main/db/changelog.xml update
+
+figlet -f standard "Instanciate and Provision Tomcat"
 
 echo "Build fresh war for Tomcat deployment"
 mvn -q clean compile war:war
@@ -83,6 +93,8 @@ while true ; do
 done
 rm tmp.txt
 
+figlet -f standard "Run Tests"
+
 echo Smoke test
 curl -s http://$(hostname):8080/passwordAPI/passwordDB > temp
 if grep -q "RESULT_SET" temp
@@ -99,7 +111,11 @@ redis-cli get TomcatURL > rest_webservice.properties
 echo "Run integration tests"
 mvn -q verify failsafe:integration-test
 
+figlet -f standard "Teardown Everything"
+
 echo "Bring down Tomcat, Oracle, and Redis"
 docker-compose -f compose-tomcat.yml -p redis-oracle-tomcat down
 docker-compose -f compose-oracle.yml -p redis-oracle-tomcat down
 docker-compose -f compose-redis.yml -p redis-oracle-tomcat down
+
+rm liquibase.properties oracleConfig.properties rest_webservice.properties

@@ -101,17 +101,17 @@ if grep -q "RESULT_SET" temp
 then
     echo "SMOKE TEST SUCCESS"
     figlet -f slant "Smoke Test Success"
+
+    echo "Configuring test application to point to Tomcat endpoint"
+    redis-cli get TomcatURL > rest_webservice.properties
+
+    echo "Run integration tests"
+    mvn -q verify failsafe:integration-test
 else
     echo "SMOKE TEST FAILURE!!!"
     figlet -f slant "Smoke Test Failure"
 fi
 rm temp
-
-echo "Configuring test application to point to Tomcat endpoint"
-redis-cli get TomcatURL > rest_webservice.properties
-
-echo "Run integration tests"
-mvn -q verify failsafe:integration-test
 
 figlet -f standard "Teardown Everything"
 
